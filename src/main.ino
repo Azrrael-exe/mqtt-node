@@ -26,7 +26,7 @@ void loop(){
   if (!client.connected()) {
     pixels.setPixelColor(0, 255, 0, 0);
     pixels.show();
-    reconnect(client, "Arduino", "vcamargo.e", "vcamargo.e@gmail.com", "lDOabObMbb");
+    reconnect(client, "Arduino", "vcamargo.e", "vcamargo.e@gmail.com", "HE3JNfEXwQ");
     pixels.setPixelColor(0, 0, 255, 0);
     pixels.show();
   }
@@ -44,6 +44,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if(req.success()){
     setAll(req, res, pixels);
     setPixel(req, res, pixels);
+    handleNotification(req, res, pixels);
     String output;
     res.printTo(output);
     Serial.println(output);

@@ -42,15 +42,41 @@ void setPixel(JsonObject& req, JsonObject& res, Adafruit_NeoPixel& pix){
   }
 }
 
-// void alarmRead(){
-//   StaticJsonBuffer<200> jsonBuffer;
-//   JsonObject& res = jsonBuffer.createObject();
-//   char* function;
-//   function = "alarmRead";
-//   res["function"] = function;
-//   res["alarm"] = digitalRead(2);
-//   res["status"] = true;
-//   res.printTo(Serial);
-// }
+void handleNotification(JsonObject& req, JsonObject& res, Adafruit_NeoPixel& pix){
+  String function;
+  function = req["function"].asString();
+  if(String(function) == "notification"){
+    String app;
+    app = req["app"].asString();
+    uint32_t color = 0;
+    bool change = false;
+    if(String(app) == "WhatsApp"){
+      color = pix.Color(0,255,0);
+      change = 1;
+    }
+    else if(String(app) == "Messenger"){
+      color = pix.Color(0,0,255);
+      change = 1;
+    }
+    else if(String(app) == "clear"){
+      color = pix.Color(0,0,0);
+      change = 1;
+    }
+    if(change){
+      uint8_t num_pixels = pix.numPixels();
+      for(int i=0; i<num_pixels; i++){
+        pix.setPixelColor(i, color);
+      }
+      pix.show();
+      res["status"] = true;
+      res["app"] = req["app"];
+    }
+    else{
+      res["status"] = false;
+      res["app"] = req["app"];
+    }
+
+  }
+}
 
 #endif
