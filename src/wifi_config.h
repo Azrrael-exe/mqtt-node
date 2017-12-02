@@ -20,4 +20,13 @@ void setup_wifi(){
   Serial.println(WiFi.localIP());
 }
 
+void wait_wifi(Adafruit_NeoPixel& pix){
+  int counter = 0;
+  while (WiFi.status() != WL_CONNECTED && counter > 10) {
+    delay(500);
+    Serial.print(counter);
+    counter++;
+  }
+}
+
 #endif;

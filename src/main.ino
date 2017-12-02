@@ -1,34 +1,69 @@
+#include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include <Adafruit_NeoPixel.h>
 
+#include <EEPROM.h>
+
 #include "wifi_config.h"
 #include "mqtt_config.h"
 #include "functions.h"
 
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(8, 14, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(36, 14, NEO_GRB + NEO_KHZ800);
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-bool req_message;
-const char* mqtt_server = "192.168.1.17";
+bool boot = true;
+MQTT broker_info;
 
 void setup(){
   Serial.begin(115200);
-  setup_wifi();
+  EEPROM.begin(1000);
   pixels.begin();
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);
+  pixels.show();
 }
 
 void loop(){
+  if(boot){
+    loadInfo(broker_info);
+    client.setServer(broker_info.broker.c_str(), 1883);
+    client.setCallback(callback);
+    boot = false;
+  }
   if (!client.connected()) {
-    pixels.setPixelColor(0, 255, 0, 0);
+    reconnect(client, broker_info.id, broker_info.owner, broker_info.email, broker_info.token);
+    movePixel(pixels, 0xff0000, 100);
+    pixels.setPixelColor(0, 0, 0, 0);
     pixels.show();
-    reconnect(client, "Arduino", "vcamargo.e", "vcamargo.e@gmail.com", "HE3JNfEXwQ");
-    pixels.setPixelColor(0, 0, 255, 0);
-    pixels.show();
+  }
+  if(Serial.available()){
+    StaticJsonBuffer<300> jsonBuffer;
+    String inp = Serial.readStringUntil('\n');
+    JsonObject& req = jsonBuffer.parseObject(inp);
+    JsonObject& res = jsonBuffer.createObject();
+    if(req.success()){
+      String function;
+      function = req["function"].asString();
+      if(function == "setup"){
+        broker_info.broker = req["broker"].asString();
+        broker_info.id = req["id"].asString();
+        broker_info.email = req["email"].asString();
+        broker_info.owner = req["owner"].asString();
+        broker_info.token = req["token"].asString();
+        saveInfo(broker_info);
+      }
+      if(function == "info"){
+        res["broker"] = broker_info.broker;
+        res["id"] = broker_info.id;
+        res["email"] = broker_info.email;
+        res["owner"] = broker_info.owner;
+        res["token"] = broker_info.token;
+        String out;
+        res.printTo(out);
+        Serial.print(out);
+      }
+    }
   }
   client.loop();
 }

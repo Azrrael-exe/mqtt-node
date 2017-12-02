@@ -51,11 +51,11 @@ void handleNotification(JsonObject& req, JsonObject& res, Adafruit_NeoPixel& pix
     uint32_t color = 0;
     bool change = false;
     if(String(app) == "WhatsApp"){
-      color = pix.Color(0,255,0);
+      color = pix.Color(0,20,0);
       change = 1;
     }
     else if(String(app) == "Messenger"){
-      color = pix.Color(0,0,255);
+      color = pix.Color(0,0,20);
       change = 1;
     }
     else if(String(app) == "clear"){
@@ -66,8 +66,9 @@ void handleNotification(JsonObject& req, JsonObject& res, Adafruit_NeoPixel& pix
       uint8_t num_pixels = pix.numPixels();
       for(int i=0; i<num_pixels; i++){
         pix.setPixelColor(i, color);
+        pix.show();
+        delay(10);
       }
-      pix.show();
       res["status"] = true;
       res["app"] = req["app"];
     }
@@ -76,6 +77,16 @@ void handleNotification(JsonObject& req, JsonObject& res, Adafruit_NeoPixel& pix
       res["app"] = req["app"];
     }
 
+  }
+}
+
+void movePixel(Adafruit_NeoPixel& pix, uint32_t color, long t){
+  uint16_t n_pixels = pix.numPixels();
+  for(int i=0; i <= n_pixels; i++){
+    delay(t);
+    pix.setPixelColor(i-1, 0);
+    pix.setPixelColor(i, color);
+    pix.show();
   }
 }
 
